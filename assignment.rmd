@@ -1,0 +1,161 @@
+---
+title: Data Mining and Visualization - Assignment 1
+author: Rayhan Permana
+date: 2024-04-09
+output: pdf_document
+---
+
+# Instructions
+- Download the 'iris' dataset or load it directly from R
+- Perform the following tasks using R programming:
+  1. Data manipulation: Select specific columns, rename columns, handle missing values, and detect/remove or make adjustments for outlier data.
+  2. Data exploration: Generate summary statistics, histograms, and scatter plots for the variables in the dataset.
+  3. Correlation analysis: Calculate Pearson correlation coefficients between variables
+  4. Linear regression: Fit a simple linear regression model with "Sepal Length" as the dependent variable and "Petal Length" and "Petal Width" as independent variables.
+  5. Hypothesis testing: Perform hypothesis testing for the coefficient "Petal Length" variable in the linear regression model.
+- Present your findings in a clear and organized manner, including any observations or insights gained from the analysis.
+- Submit your R code file along with a brief report explaining your approach, analysis results, and conclusions.
+
+# Assignment
+
+## Prerequisites
+
+### Load the libraries
+```{r}
+library(datasets)
+library(Hmisc)
+library(dplyr)
+```
+
+### Load the dataset
+Load the 'iris' dataset to 'data' variable.
+```{r}
+data <- iris
+```
+
+## Data Manipulation
+
+### Select specific columns
+Prints the first 10 values of Sepal.Length variable.
+```{r}
+print(data$Sepal.Length[1:10])
+```
+
+
+### Rename columns
+Rename all columns to fit with R's snake case variable naming.
+Example: Sepal.Length -> sepal_length
+```{r}
+for (column_name in names(data)) {
+  new_column_name <- chartr(".", "_", tolower(column_name))
+  names(data)[names(data) == column_name] <- new_column_name
+  print(paste(column_name, new_column_name, sep = " -> "))
+}
+```
+This code loops over all the column name and makes them lowercase before swapping the `.` to `_`. Then, it swaps the column names with the updated versions of it.
+
+### Handle missing values
+Replace NA values using na.omit
+```{r}
+na.omit(data)
+```
+This code deletes all the rows that has NA value in one or more of the columns.
+
+### Remove outlier data
+```{r}
+check_outlier <- function(data_column) {
+  Q1 <- quantile(data_column, probs = .25)
+  Q3 <- quantile(data_column, probs = .75)
+  iqr <- Q3 - Q1
+
+  up <- Q3 + 1.5 * iqr
+  low <- Q1 - 1.5 * iqr
+
+  data_column > up | data_column < low
+}
+
+remove_outlier <- function(dataframe) {
+  for (column in names(dataframe)) {
+    dataframe <- dataframe[!check_outlier(as.numeric(dataframe[[column]])), ]
+  }
+  dataframe
+}
+
+data_clean <- remove_outlier(data)
+```
+The `remove_outlier` function loops over all columns and removes all rows that has an outlier data. It uses `check_outlier` function to check which rows are outliers. We can see the result by running these code snippets that generates boxplots:
+Before:
+```{r}
+boxplot(data)
+```
+After:
+```{r}
+boxplot(data_clean)
+```
+
+## Data Exploration
+
+### Generate summary statistics
+Print summary of 'data_clean' variable.
+```{r}
+summary(data_clean)
+```
+After running this code snippet, we can see all the minimal, quartiles, mean, and max of all the numerical columns in the dataframe. We can also see the counts of each species in the summary.
+
+### Generate histograms
+Generate histograms for all numerical columns.
+```{r}
+hist.data.frame(select(data_clean, where(is.numeric)))
+```
+From the histograms, we can see most of the Petal Length are around 4-5 units in length, and most of the Petal Width are around 1.0-1.5 units in length. The Sepal Length frequency seems to be uniform up to the 6.5 unit length mark.
+
+### Generate scatter plot
+Generate scatter plots for all numerical columns.
+```{r}
+plot(select(data_clean, where(is.numeric)))
+```
+Here we can see some sort of correlation between Sepal Lenght and both Petal Length and Petal Width by looking at the direction of the plots.
+
+## Correlation Analysis
+
+### Calculate Pearson correlation coefficients between variables
+Calculate Pearson correlation to all numeric variable
+```{r}
+print(cor(select(data_clean, where(is.numeric)), method = "pearson"))
+```
+By running this code snippet, we can see that those that the variable `sepal_length` correlates strongly with `petal_length` and `petal_width`. We can also see that the variable `petal_length` and `petal_width` correlates very strongly. This suggests that the flower more or less grows equally to both axes.
+
+## Linear Regression
+
+### Fit a simple linear regression model with "Sepal Length" as the dependent variable and "Petal Length" as the independent variable
+```{r}
+model1 <- lm(petal_length ~ sepal_length, data = data_clean)
+```
+We can see the line by running this code snippet:
+```{r}
+plot(petal_length ~ sepal_length, data = data_clean)
+abline(model1)
+```
+With the line graph, we can clearly see the direction of the relationship between Petal Length and Sepal Length columns.
+
+### Fit a simple linear regression model with "Sepal Length" as the dependent variable and "Petal Width" as the independent variable
+```{r}
+model2 <- lm(petal_width ~ sepal_length, data = data_clean)
+```
+We can see the line by running this code snippet:
+```{r}
+plot(petal_width ~ sepal_length, data = data_clean)
+abline(model2)
+```
+With the line graph, we can clearly see the direction of the relationship between Petal Length and Sepal Length columns.
+
+## Hypothesis Testing
+### Perform hypothesis testing for the coefficient "Petal Length" variable in the linear regression model.
+```{r}
+summary(model1)
+```
+This summary of the linear regression indicates that sepal length is a significant predictor of petal length, as indicated by the very low p-value (< 2.2e-16) associated with the coefficient of sepal_length. The model explains about 77% of the variance in petal length, and the overall regression model is highly significant.
+
+# Additional
+The url for both the Markdown and R Code:
+[Github: Data Mining Assignment](https://github.com/SonicRay241/data-mining-assignment-1)
